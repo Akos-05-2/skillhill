@@ -14,24 +14,43 @@ model User {
   email         String?         @unique
   emailVerified DateTime?
   image         String?
+  role          Role            @default(USER)
   accounts      Account[]
   sessions      Session[]
+  courses       Courses[]
+  submissions   Submissions[]
+  enrollments   Enrollments[]
+
   // Optional for WebAuthn support
   Authenticator Authenticator[]
- 
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("Users")
 }
+enum Role {
+  ADMIN
+  TEACHER
+  USER
+  GUEST
+}
+
+
+// model Roles{
+//   role_id             Int               @id @default(autoincrement())          
+//   role_name           String            @unique
+//   user                User[]
+// }
 
 model Courses{
-    course_id          String           @id @default(cuid())
+    course_id          Int              @id @default(autoincrement())
     course_name        String
     description        String
     created_at         DateTime         @default(now())
     user_id            String
-    document_id        String
+    document_id        Int
+    user               User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Assignments{
@@ -40,11 +59,6 @@ model Assignments{
     title               String
     due_date            DateTime
     created_at          DateTime        @default(now())          
-}
-
-model Roles{
-    role_id             String          @id @default(cuid())
-    role_name           String
 }
 
 model Course_materials{
@@ -60,6 +74,7 @@ model Submissions{
     user_id             String
     document_id         String
     submission_date     DateTime        @default(now())
+    user                User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Enrollments{
@@ -67,6 +82,7 @@ model Enrollments{
     user_id            String
     course_id          String
     enrolmment_date    DateTime         @default(now())
+    user               User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Documents{
