@@ -17,7 +17,6 @@ model User {
   role          Role            @default(USER)
   accounts      Account[]
   sessions      Session[]
-  courses       Courses[]
   submissions   Submissions[]
   enrollments   Enrollments[]
 
@@ -48,9 +47,8 @@ model Courses{
     course_name        String
     description        String
     created_at         DateTime         @default(now())
-    user_id            String
-    document_id        Int
-    user               User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    document_id        Int?
+    enrollment         Enrollments[]
 }
 
 model Assignments{
@@ -80,9 +78,10 @@ model Submissions{
 model Enrollments{
     enrollment_id      String           @id @default(cuid())
     user_id            String
-    course_id          String
-    enrolmment_date    DateTime         @default(now())
+    course_id          Int
+    enrolment_date     DateTime         @default(now())
     user               User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    course             Courses          @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
 }
 
 model Documents{
