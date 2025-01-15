@@ -12,7 +12,7 @@ export async function DELETE(req: Request) {
             role: true
         }
     })
-    if (userRole && userRole?.role === 'ADMIN'){
+    if (userRole && userRole?.role.role_name === 'ADMIN'){
         const {user_id} = await req.json();
         if (!user_id){
             return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});
@@ -70,7 +70,7 @@ export async function PUT(req: NextRequest){
             role: true
         }
     })
-    if (userRole && userRole?.role === 'ADMIN'){
+    if (userRole && userRole?.role.role_name === 'ADMIN'){
         const {user_id, role} = await req.json();
         if (!user_id || !role){
             return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});

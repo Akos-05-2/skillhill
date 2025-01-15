@@ -32,7 +32,7 @@ export async function POST(req: NextResponse){
             role: true
         }
     })
-    if (userRole && userRole?.role === 'ADMIN' || userRole?.role === 'TEACHER'){
+    if (userRole && userRole?.role.role_name === 'ADMIN' || userRole?.role.role_name === 'TEACHER'){
         const {course_name, description} = await req.json();
         if (!course_name || !description){
             return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});
@@ -65,7 +65,7 @@ export async function DELETE(req: Request){
             role: true
         }
     })
-    if (userRole && userRole?.role === 'ADMIN' || userRole?.role === 'TEACHER'){
+    if (userRole && userRole?.role.role_name === 'ADMIN' || userRole?.role.role_name === 'TEACHER'){
         const {course_id} = await req.json();
         if (!course_id){
             return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});
