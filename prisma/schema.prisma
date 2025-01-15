@@ -1,0 +1,160 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+ 
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  username      String?         @unique
+  email         String?         @unique
+  emailVerified DateTime?
+  image         Int?
+  roleId        Int              @map("role_id")
+  accounts      Account[]
+  sessions      Session[]
+  submissions   Submissions[]
+  enrollments   Enrollments[]
+
+  // Optional for WebAuthn support
+  Authenticator Authenticator[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role            Roles        @relation(fields: [roleId], references: [id])
+
+  @@map("Users")
+}
+
+
+
+model Roles{
+   id                  Int               @id @default(autoincrement())          
+   role_name           String            @unique
+   users               User[]
+}
+
+
+model Courses{
+    course_id          Int              @id @default(autoincrement())
+    course_name        String
+    description        String
+    created_at         DateTime         @default(now())
+    document_id        Int?
+    enrollment         Enrollments[]
+}
+
+
+model Course_materials{
+    material_id         String          @id @default(cuid())
+    course_id           String
+    document_id         String
+    created_at          DateTime        @default(now())
+}
+
+model Assignments{
+    assingment_id       String          @id @default(cuid())
+    course_id           String
+    title               String
+    due_date            DateTime
+    created_at          DateTime        @default(now())          
+}
+
+model Submissions{
+    submission_id       String          @id @default(cuid())
+    assignment_id       String
+    user_id             String
+    document_id         String
+    submission_date     DateTime        @default(now())
+    user                User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Enrollments{
+    enrollment_id      String           @id @default(cuid())
+    user_id            String
+    course_id          Int
+    enrolment_date     DateTime         @default(now())
+    user               User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    course             Courses          @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+}
+
+model Documents{
+    document_id        String          @id @default(cuid())
+}
+
+model Document_files{
+    file_id            String          @id  @default(cuid())
+    document_id        String
+    file_path          String
+    created_at         DateTime        @default(now())
+}
+ 
+model Account {
+  id                       String  @id @default(cuid())
+  userId                   String  @unique
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? @db.Text
+  access_token             String? @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? @db.Text
+  session_state            String?
+  refresh_token_expires_in Int?
+  user                     User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+
+  @@map("Accounts")
+}
+ 
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  @@index([userId])
+  @@map("Sessions")
+}
+ 
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+ 
+  @@unique([identifier, token])
+  @@map("VerificationTokens")
+}
+ 
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@id([userId, credentialID])
+  @@map("Authenticators")
+}

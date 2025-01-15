@@ -1,0 +1,96 @@
+import { OPTIONS, prisma } from '../../auth/[...nextauth]/route';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+export async function DELETE(req: Request) {  
+    const session = await getServerSession(OPTIONS);
+    const userRole = await prisma.user.findUnique({
+        where: {
+            email: session?.user?.email ?? ''
+        },
+        select: {
+            role: true
+        }
+    })
+    if (userRole && userRole?.role === 'ADMIN'){
+        const {user_id} = await req.json();
+        if (!user_id){
+            return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});
+        }
+        try{
+            const user = await prisma.user.delete({
+                where: {
+                    id: user_id
+                },
+                select: {
+                    id: true
+                }
+            });
+            return NextResponse.json(user, {status: 200});
+        }catch{
+            console.error('Hiba a felhasználó törlésekor!');
+            return NextResponse.json({error: 'Hiba a csatlakozás során!'}, {status: 500});
+        }
+    }
+    else{
+        console.error('Hiba a törléskor! Nem megfelelő szerepkör!');
+        return NextResponse.json({error: 'Nem megfelelő szerepkör! Szükséges szerepkör: ADMIN!'}, {status: 403});
+    }
+}
+
+export async function GET(){
+    const session = await getServerSession(OPTIONS);
+    console.log(session);
+    try{
+        const email = session?.user?.email;
+        const user = await prisma.user.findUnique({
+            where: {email: email ?? ''},
+            select: {
+                id: false,
+                email: true,
+                name: true,
+                createdAt: true,
+                image: true
+            }
+        });
+        return NextResponse.json(user, {status: 200});
+    }catch{
+        console.error('Hiba a felhasználó keresése többen!');
+        return NextResponse.json({error: 'Hiba a csatlakozás során!'}, {status: 500});
+    }
+}
+
+export async function PUT(req: NextRequest){
+    const session = await getServerSession(OPTIONS);
+    const userRole = await prisma.user.findUnique({
+        where: {
+            email: session?.user?.email ?? ''
+        },
+        select: {
+            role: true
+        }
+    })
+    if (userRole && userRole?.role === 'ADMIN'){
+        const {user_id, role} = await req.json();
+        if (!user_id || !role){
+            return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});
+        }
+        try{
+            const user = await prisma.user.update({
+                where: {
+                    id: user_id
+                },
+                data: {
+                    role: role
+                },
+                select: {
+                    id: true
+                }
+            });
+            return NextResponse.json(user, {status: 200});
+        }catch{
+            console.error('Hiba a felhasználó modositáskor!');
+            return NextResponse.json({error: 'Hiba a csatlakozás során!'}, {status: 500});
+        }
+    }
+}
