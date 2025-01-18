@@ -1,4 +1,5 @@
 import LogOut from '../logout/page'
+import SearchBar from '../search/page'
 import './style.css'
 const Header = () => {
     return(
@@ -7,14 +8,21 @@ const Header = () => {
                 <h1>SkillHill</h1>
                 <nav>
                     <ul>
-                        <li>
+                        <li className='menu'>
                             <a href="#">Kurzusaim</a>
                         </li>
                     </ul>
+                    <ul>
+                        <li className='searchbar'>
+                            <SearchBar />
+                        </li>
+                    </ul>
+                    <ul>
+                        <li className='logout'>
+                            <LogOut />
+                        </li>
+                    </ul>
                 </nav>
-            </div>
-            <div className='logout'>
-                <LogOut />
             </div>
         </>
     )
