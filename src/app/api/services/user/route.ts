@@ -1,18 +1,17 @@
 import { OPTIONS, prisma } from '../../auth/[...nextauth]/route';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { userRole } from '../../export/userrole';
+import { IUserRoleResult } from '../../models/userroleresult';
 
 export async function DELETE(req: Request) {  
     const session = await getServerSession(OPTIONS);
-    const userRole = await prisma.user.findUnique({
-        where: {
-            email: session?.user?.email ?? ''
-        },
-        select: {
-            role: true
-        }
-    })
-    if (userRole && userRole?.role.role_name === 'ADMIN'){
+    if (!session){
+        NextResponse.json({role: 'GUEST'}, {status: 200});
+    }
+    const response = await userRole();
+    const userRoleResponse: IUserRoleResult = await response.json();
+    if (userRoleResponse && userRoleResponse?.role.role_name === 'ADMIN'){
         const {user_id} = await req.json();
         if (!user_id){
             return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});
@@ -62,15 +61,12 @@ export async function GET(){
 
 export async function PUT(req: NextRequest){
     const session = await getServerSession(OPTIONS);
-    const userRole = await prisma.user.findUnique({
-        where: {
-            email: session?.user?.email ?? ''
-        },
-        select: {
-            role: true
-        }
-    })
-    if (userRole && userRole?.role.role_name === 'ADMIN'){
+    if (!session){
+        return NextResponse.json({role: 'GUEST'}, {status: 200});
+    }
+    const response = await userRole();
+    const userRoleResponse: IUserRoleResult = await response.json();
+    if (userRoleResponse && userRoleResponse?.role.role_name === 'ADMIN'){
         const {user_id, role} = await req.json();
         if (!user_id || !role){
             return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});

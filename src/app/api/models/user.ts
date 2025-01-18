@@ -1,11 +1,10 @@
-export class User{
-    id?: string;
-    name?: string;
-    username?: string;
-    email?: string;
-    emailVerified?: Date;
-    image?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-    role?: string;
+export interface IUser{
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: Date;
+    image: number;
+    createdAt: Date;
+    updatedAt: Date;
+    role_id: number;
 }

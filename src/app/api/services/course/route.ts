@@ -1,6 +1,8 @@
 import { OPTIONS, prisma } from '../../auth/[...nextauth]/route';
 import { NextResponse } from 'next/server';
 import NextAuth, { getServerSession } from 'next-auth';
+import { userRole } from '../../export/userrole';
+import { IUserRoleResult } from '../../models/userroleresult';
 
 export async function GET(){
     const session = await NextAuth(OPTIONS);
@@ -24,15 +26,12 @@ export async function GET(){
 
 export async function POST(req: NextResponse){
     const session = await getServerSession(OPTIONS);
-    const userRole = await prisma.user.findUnique({
-        where: {
-            email: session?.user?.email ?? ''
-        },
-        select: {
-            role: true
-        }
-    })
-    if (userRole && userRole?.role.role_name === 'ADMIN' || userRole?.role.role_name === 'TEACHER'){
+    if (!session){
+        return NextResponse.json({role: 'GUEST'}, {status: 200});
+    }
+    const response = await userRole();
+    const userRoleResult: IUserRoleResult = await response.json();
+    if (userRoleResult && userRoleResult?.role.role_name === 'ADMIN' || userRoleResult?.role.role_name === 'TEACHER'){
         const {course_name, description} = await req.json();
         if (!course_name || !description){
             return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});
@@ -57,15 +56,12 @@ export async function POST(req: NextResponse){
 
 export async function DELETE(req: Request){
     const session = await getServerSession(OPTIONS);
-    const userRole = await prisma.user.findUnique({
-        where: {
-            email: session?.user?.email ?? ''
-        },
-        select: {
-            role: true
-        }
-    })
-    if (userRole && userRole?.role.role_name === 'ADMIN' || userRole?.role.role_name === 'TEACHER'){
+    if (!session){
+        return NextResponse.json({role: 'GUEST'}, {status: 200});
+    }
+    const response = await userRole();
+    const userRoleResult: IUserRoleResult = await response.json();
+    if (userRoleResult && userRoleResult.role.role_name === 'ADMIN' || userRoleResult.role.role_name === 'TEACHER'){
         const {course_id} = await req.json();
         if (!course_id){
             return NextResponse.json({error: 'Hiányzó adatok!'}, {status: 400});

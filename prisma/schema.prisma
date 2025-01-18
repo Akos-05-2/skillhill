@@ -14,7 +14,7 @@ model User {
   email         String?         @unique
   emailVerified DateTime?
   image         Int?
-  roleId        Int              @map("role_id")
+  roleId        Int
   accounts      Account[]
   sessions      Session[]
   submissions   Submissions[]
@@ -61,6 +61,7 @@ model Assignments{
     assingment_id       String          @id @default(cuid())
     course_id           String
     title               String
+    description         String
     due_date            DateTime
     created_at          DateTime        @default(now())          
 }
@@ -75,7 +76,7 @@ model Submissions{
 }
 
 model Enrollments{
-    enrollment_id      String           @id @default(cuid())
+    enrollment_id      Int              @id @default(autoincrement())
     user_id            String
     course_id          Int
     enrolment_date     DateTime         @default(now())
