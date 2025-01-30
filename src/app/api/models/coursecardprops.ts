@@ -1,6 +1,7 @@
-import { ICourse } from "./course";
-
 export interface CourseCardProps {
-    c: ICourse;
-    userId: string;
+    c: {
+        course_id: number;
+        course_name: string;
+        description: string;
+    }[],
 }

@@ -14,7 +14,7 @@ model User {
   email         String?         @unique
   emailVerified DateTime?
   image         Int?
-  roleId        Int
+  roleId        Int             @default(2)
   accounts      Account[]
   sessions      Session[]
   submissions   Submissions[]
@@ -77,11 +77,12 @@ model Submissions{
 
 model Enrollments{
     enrollment_id      Int              @id @default(autoincrement())
-    user_id            String
+    email              String
     course_id          Int
     enrolment_date     DateTime         @default(now())
-    user               User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    user               User             @relation(fields: [email], references: [email], onDelete: Cascade)
     course             Courses          @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+    @@unique([course_id, email], name: "course_id_email")
 }
 
 model Documents{

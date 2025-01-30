@@ -41,18 +41,19 @@ export async function GET(){
     const session = await getServerSession(OPTIONS);
     console.log(session);
     try{
-        const email = session?.user?.email;
-        const user = await prisma.user.findUnique({
-            where: {email: email ?? ''},
+        const users = await prisma.user.findMany({
             select: {
                 id: false,
-                email: true,
                 name: true,
-                createdAt: true,
-                image: true
+                email: true,
+                role: {
+                    select: {
+                        role_name: true
+                    }
+                }
             }
         });
-        return NextResponse.json(user, {status: 200});
+        return NextResponse.json(users, {status: 200});
     }catch{
         console.error('Hiba a felhasználó keresése többen!');
         return NextResponse.json({error: 'Hiba a csatlakozás során!'}, {status: 500});
