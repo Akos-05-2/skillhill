@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import CourseEditDialog from '../components/course-edit-dialog/course-edit-dialog';
+import { Input } from '@/components/ui/input';
+import CourseEditDialog from '../course-edit-dialog/course-edit-dialog';
 import axios from 'axios';
-import CourseSearch from '@/app/components/course-search/course-search';
 
 interface Course {
   id: string;
@@ -23,60 +22,72 @@ interface Course {
   };
 }
 
-const SearchBar = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+export default function CourseManager() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isNewCourse, setIsNewCourse] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
-
+  const fetchCourses = async () => {
     try {
       setIsLoading(true);
-      setError(null);
       const params = new URLSearchParams();
-      params.append('search', searchTerm);
+      if (searchTerm) params.append('search', searchTerm);
 
       const { data } = await axios.get(`/api/courses?${params.toString()}`);
       setCourses(data);
+      setError(null);
     } catch (error) {
-      console.error('Hiba a kurzusok keresése során:', error);
+      console.error('Hiba a kurzusok betöltése során:', error);
       setError('Nem sikerült betölteni a kurzusokat');
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchCourses();
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  const handleCreateCourse = () => {
+    setSelectedCourse(null);
+    setIsNewCourse(true);
+    setIsDialogOpen(true);
+  };
+
   const handleEditCourse = (course: Course) => {
     setSelectedCourse(course);
+    setIsNewCourse(false);
     setIsDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setSelectedCourse(null);
-  };
-
-  const handleSave = () => {
-    handleSearch(); // Frissítjük a listát
+    setIsNewCourse(false);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Kurzusok keresése</h1>
-      <div className="flex gap-4 mb-8">
-        <Input
-          type="text"
-          placeholder="Keresés kurzusok között..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          className="flex-1"
-        />
-        <Button onClick={handleSearch}>Keresés</Button>
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex-1 max-w-md">
+          <Input
+            type="text"
+            placeholder="Keresés kurzusok között..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Button onClick={handleCreateCourse} className="ml-4">
+          Új kurzus
+        </Button>
       </div>
 
       {error && (
@@ -85,7 +96,7 @@ const SearchBar = () => {
 
       {isLoading ? (
         <div className="text-center">Betöltés...</div>
-      ) : courses.length > 0 ? (
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {courses.map((course) => (
             <div
@@ -103,23 +114,15 @@ const SearchBar = () => {
             </div>
           ))}
         </div>
-      ) : searchTerm && !isLoading ? (
-        <div className="text-center text-gray-500">
-          Nincs találat a keresési feltételekre.
-        </div>
-      ) : (
-        <CourseSearch />
       )}
 
       <CourseEditDialog
         isOpen={isDialogOpen}
         onClose={handleCloseDialog}
         course={selectedCourse}
-        onSave={handleSave}
-        isNew={false}
+        onSave={fetchCourses}
+        isNew={isNewCourse}
       />
     </div>
   );
 }
-
-export default SearchBar;

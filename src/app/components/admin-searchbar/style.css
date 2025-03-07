@@ -1,7 +1,7 @@
 .search-container {
     position: relative;
     width: 100%;
-    max-width: 600px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 1rem;
 }
@@ -9,21 +9,22 @@
 .search-input-container {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .search-input {
     flex: 1;
     padding: 0.75rem 1rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e2e8f0;
     border-radius: 0.5rem;
     font-size: 1rem;
     outline: none;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s;
 }
 
 .search-input:focus {
-    border-color: #4f46e5;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .search-input:disabled {
@@ -33,34 +34,130 @@
 
 .search-button {
     padding: 0.75rem 1.5rem;
-    background-color: #4f46e5;
+    background-color: #3b82f6;
     color: white;
     border: none;
     border-radius: 0.5rem;
     font-size: 1rem;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s;
 }
 
-.search-button:hover:not(:disabled) {
-    background-color: #4338ca;
+.search-button:hover {
+    background-color: #2563eb;
 }
 
 .search-button:disabled {
-    background-color: #9ca3af;
+    background-color: #93c5fd;
     cursor: not-allowed;
 }
 
 .search-error {
     color: #ef4444;
-    font-size: 0.875rem;
     margin-top: 0.5rem;
-    text-align: center;
+    font-size: 0.875rem;
 }
 
 .search-loading {
-    color: #4f46e5;
-    font-size: 0.875rem;
+    color: #6b7280;
     margin-top: 0.5rem;
-    text-align: center;
+    font-size: 0.875rem;
+}
+
+/* Statisztikák */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Találatok */
+.user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.user-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.user-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-avatar-placeholder {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.user-details {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.user-email {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.user-role {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    color: #4b5563;
+    margin-top: 0.25rem;
+}
+
+.role-emoji {
+    font-size: 1rem;
 }

@@ -1,0 +1,783 @@
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import './page.css';
+
+interface Stats {
+  users: {
+    total: number;
+    students: number;
+    teachers: number;
+    admins: number;
+  };
+  courses: {
+    total: number;
+    active: number;
+    withStudents: number;
+  };
+}
+
+interface User {
+  id: string;
+  name: string | null;
+  email: string | null;
+  roleId: number;
+  image: string | null;
+}
+
+interface CourseStats {
+  total: number;
+  active: number;
+  archived: number;
+}
+
+interface Course {
+  id: string;
+  name: string;
+  description: string;
+  teacherId: string;
+  isActive: boolean;
+  createdAt: Date;
+  teacher: {
+    name: string | null;
+    email: string | null;
+    image: string | null;
+  };
+  _count: {
+    students: number;
+  };
+}
+
+const roleEmojis = {
+  2: '👨‍🎓',
+  3: '👨‍🏫',
+  4: '👨‍💼',
+  5: '👑'
+} as const;
+
+const roleNames = {
+  2: 'Tanuló',
+  3: 'Tanár',
+  4: 'Admin',
+  5: 'Szuperadmin'
+} as const;
+
+export default function AdminPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      router.replace('/');
+    },
+  });
+
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [courseStats, setCourseStats] = useState<CourseStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [courseSearchQuery, setCourseSearchQuery] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isCourseSaving, setIsCourseSaving] = useState(false);
+  const [isCourseDeleting, setIsCourseDeleting] = useState(false);
+  const [isCreatingCourse, setIsCreatingCourse] = useState(false);
+  const [newCourse, setNewCourse] = useState({ name: '', description: '' });
+
+  // Check for admin or superadmin role
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.roleId !== 4 && session?.user?.roleId !== 5) {
+      router.replace('/');
+    }
+  }, [status, session, router]);
+
+  // Fetch user statistics and users
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [statsResponse, usersResponse, coursesResponse] = await Promise.all([
+        fetch('/api/stats'),
+        fetch('/api/users'),
+        fetch('/api/courses')
+      ]);
+
+      if (!statsResponse.ok) throw new Error('Failed to fetch statistics');
+      if (!usersResponse.ok) throw new Error('Failed to fetch users');
+      if (!coursesResponse.ok) throw new Error('Failed to fetch courses');
+
+      const statsData = await statsResponse.json();
+      const usersData = await usersResponse.json();
+      const coursesData = await coursesResponse.json();
+
+      setStats(statsData);
+      setUsers(usersData);
+      setCourses(coursesData);
+      setError(null);
+    } catch (err) {
+      setError('Nem sikerült betölteni az adatokat');
+      console.error('Error fetching data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchData();
+    }
+  }, [status]);
+
+  // Filter users based on search query, ignoring @gmail.com
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    
+    const query = searchQuery.toLowerCase();
+    return users.filter(user => {
+      const name = user.name?.toLowerCase() || '';
+      const email = user.email?.toLowerCase().replace(/@gmail\.com$/, '') || '';
+      return name.includes(query) || email.includes(query);
+    });
+  }, [users, searchQuery]);
+
+  // Filter courses based on search query
+  const filteredCourses = useMemo(() => {
+    if (!courseSearchQuery.trim()) return courses;
+    
+    const query = courseSearchQuery.toLowerCase();
+    return courses.filter(course => {
+      const name = course.name.toLowerCase();
+      const description = course.description.toLowerCase();
+      const teacherName = course.teacher.name?.toLowerCase() || '';
+      return name.includes(query) || description.includes(query) || teacherName.includes(query);
+    });
+  }, [courses, courseSearchQuery]);
+
+  const handleUserClick = (user: User) => {
+    setSelectedUser(user);
+  };
+
+  const handleCourseClick = (course: Course) => {
+    setSelectedCourse(course);
+  };
+
+  const handleRoleChange = async (roleId: string, user: User) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          roleId: parseInt(roleId),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const updatedUser = await response.json();
+      // Update both the users list and selected user
+      setUsers(prevUsers => 
+        prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u)
+      );
+      setSelectedUser(updatedUser);
+      await fetchData(); // Refresh stats
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      setError('Nem sikerült módosítani a felhasználó szerepkörét');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCourseUpdate = async (courseId: string, data: { name: string; description: string }) => {
+    setIsCourseSaving(true);
+    try {
+      const response = await fetch('/api/courses', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseId,
+          ...data,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const updatedCourse = await response.json();
+      setCourses(prevCourses => 
+        prevCourses.map(c => c.id === updatedCourse.id ? updatedCourse : c)
+      );
+      setSelectedCourse(updatedCourse);
+      await fetchData();
+    } catch (error) {
+      console.error('Error updating course:', error);
+      setError('Nem sikerült módosítani a kurzust');
+    } finally {
+      setIsCourseSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    if (!confirm('Biztosan törölni szeretnéd ezt a felhasználót?')) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/users?userId=${user.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      // Update users list immediately
+      setUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
+      setSelectedUser(null);
+      await fetchData(); // Refresh stats
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setError('Nem sikerült törölni a felhasználót');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCourseDelete = async (course: Course) => {
+    if (!confirm('Biztosan törölni szeretnéd ezt a kurzust?')) return;
+
+    setIsCourseDeleting(true);
+    try {
+      const response = await fetch(`/api/courses?courseId=${course.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      setCourses(prevCourses => prevCourses.filter(c => c.id !== course.id));
+      setSelectedCourse(null);
+      await fetchData();
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      setError('Nem sikerült törölni a kurzust');
+    } finally {
+      setIsCourseDeleting(false);
+    }
+  };
+
+  const handleCreateCourse = async () => {
+    if (!newCourse.name || !newCourse.description) {
+      setError('A kurzus neve és leírása kötelező!');
+      return;
+    }
+
+    setIsCreatingCourse(true);
+    try {
+      const response = await fetch('/api/courses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCourse),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const createdCourse = await response.json();
+      setCourses(prevCourses => [...prevCourses, createdCourse]);
+      setSelectedCourse(createdCourse);
+      setNewCourse({ name: '', description: '' });
+      await fetchData();
+    } catch (error) {
+      console.error('Error creating course:', error);
+      setError('Nem sikerült létrehozni a kurzust');
+    } finally {
+      setIsCreatingCourse(false);
+    }
+  };
+
+  const canModifyUser = (user: User) => {
+    if (!session?.user) return false;
+    if (session.user.roleId === 5) return true;
+    return user.roleId !== 4 && user.roleId !== 5;
+  };
+
+  const canModifyCourse = (course: Course) => {
+    if (!session?.user) return false;
+    if (session.user.roleId === 4 || session.user.roleId === 5) return true;
+    return course.teacherId === session.user.id;
+  };
+
+  // Show loading state while checking authentication
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="loading-container">
+        <div>
+          <div className="loading-spinner">⌛</div>
+          <div className="loading-text">Betöltés...</div>
+          <div className="loading-subtext">Kérjük várj, amíg betöltjük az adatokat.</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Hide content if not admin/superadmin
+  if (status === 'authenticated' && (!session?.user || (session.user.roleId !== 4 && session.user.roleId !== 5))) {
+    return null;
+  }
+
+  return (
+    <div className="admin-page">
+      <div className="admin-container">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Admin Felület 👨‍💼</h1>
+          <div className="text-sm text-gray-600">
+            Bejelentkezve mint: {session?.user?.email}
+          </div>
+        </div>
+
+        {/* Statistics Section */}
+        <section className="stats-section mb-8" aria-labelledby="stats-title">
+          <h2 id="stats-title" className="text-2xl font-semibold mb-4">Felhasználói Statisztikák 📊</h2>
+          {error ? (
+            <div className="text-red-600 p-4 bg-red-50 rounded-lg" role="alert">
+              ⚠️ {error}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="stat-card bg-white p-4 rounded-lg shadow">
+                <div className="text-gray-600">👥 Összes felhasználó</div>
+                <div className="text-2xl font-bold">{stats?.users.total || 0}</div>
+              </div>
+              <div className="stat-card bg-white p-4 rounded-lg shadow">
+                <div className="text-gray-600">👨‍🎓 Tanulók</div>
+                <div className="text-2xl font-bold">{stats?.users.students || 0}</div>
+              </div>
+              <div className="stat-card bg-white p-4 rounded-lg shadow">
+                <div className="text-gray-600">👨‍🏫 Tanárok</div>
+                <div className="text-2xl font-bold">{stats?.users.teachers || 0}</div>
+              </div>
+              <div className="stat-card bg-white p-4 rounded-lg shadow">
+                <div className="text-gray-600">👨‍💼 Adminisztrátorok</div>
+                <div className="text-2xl font-bold">{stats?.users.admins || 0}</div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Course Statistics Section */}
+        <section className="stats-section mb-8" aria-labelledby="course-stats-title">
+          <h2 id="course-stats-title" className="text-2xl font-semibold mb-4">Kurzus Statisztikák 📚</h2>
+          {error ? (
+            <div className="text-red-600 p-4 bg-red-50 rounded-lg" role="alert">
+              ⚠️ {error}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="stat-card bg-white p-4 rounded-lg shadow">
+                <div className="text-gray-600">📖 Összes kurzus</div>
+                <div className="text-2xl font-bold">{stats?.courses.total || 0}</div>
+              </div>
+              <div className="stat-card bg-white p-4 rounded-lg shadow">
+                <div className="text-gray-600">✨ Aktív kurzusok</div>
+                <div className="text-2xl font-bold">{stats?.courses.active || 0}</div>
+              </div>
+              <div className="stat-card bg-white p-4 rounded-lg shadow">
+                <div className="text-gray-600">👥 Kurzusok tanulókkal</div>
+                <div className="text-2xl font-bold">{stats?.courses.withStudents || 0}</div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Search Section */}
+          <section className="search-section" aria-labelledby="search-title">
+            <h2 id="search-title" className="text-2xl font-semibold mb-4">Felhasználók Keresése 🔍</h2>
+            <div className="mb-4">
+              <Input
+                type="text"
+                placeholder="Keresés név vagy email alapján..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+                aria-label="Keresési kifejezés"
+              />
+            </div>
+
+            {/* Results Section */}
+            {searchQuery && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold mb-2">
+                  Találatok ({filteredUsers.length}) 📝
+                </h3>
+                {filteredUsers.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredUsers.map((user) => (
+                      <div
+                        key={user.id}
+                        className={`user-result-card bg-white p-3 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow ${selectedUser?.id === user.id ? 'border-2 border-blue-500' : ''}`}
+                        onClick={() => handleUserClick(user)}
+                      >
+                        <div className="flex items-center gap-3">
+                          {user.image && (
+                            <img
+                              src={user.image}
+                              alt={user.name || 'User'}
+                              className="w-8 h-8 rounded-full"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{user.name || 'Névtelen felhasználó'}</div>
+                            <div className="text-sm text-gray-500 truncate">{user.email}</div>
+                          </div>
+                          <div className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                            {roleEmojis[user.roleId as keyof typeof roleEmojis]} {roleNames[user.roleId as keyof typeof roleNames]}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-center py-4 bg-white rounded-lg shadow" role="status">
+                    😕 Nincs találat a keresésre.
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* User Editor Section */}
+          <section className="user-editor-section" aria-labelledby="editor-title">
+            <h2 id="editor-title" className="text-2xl font-semibold mb-4">Felhasználó Szerkesztése ✏️</h2>
+            {selectedUser ? (
+              <div className="bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center gap-4 mb-4">
+                  {selectedUser.image && (
+                    <img
+                      src={selectedUser.image}
+                      alt={selectedUser.name || 'User'}
+                      className="w-16 h-16 rounded-full"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-lg truncate">
+                      {selectedUser.name || 'Névtelen felhasználó'}
+                    </div>
+                    <div className="text-gray-500 truncate">{selectedUser.email}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium flex items-center gap-2 mb-2">
+                      <span className="dialog-emoji">🎭</span>
+                      Szerepkör
+                    </label>
+                    <Select
+                      value={selectedUser.roleId.toString()}
+                      onValueChange={(value) => handleRoleChange(value, selectedUser)}
+                      disabled={!canModifyUser(selectedUser) || isSaving}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue>
+                          <span className="role-select-item">
+                            <span className="emoji">
+                              {roleEmojis[selectedUser.roleId as keyof typeof roleEmojis]}
+                            </span>
+                            {roleNames[selectedUser.roleId as keyof typeof roleNames]}
+                          </span>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2" className="role-select-item">
+                          <span className="emoji">👨‍🎓</span> Tanuló
+                        </SelectItem>
+                        <SelectItem value="3" className="role-select-item">
+                          <span className="emoji">👨‍🏫</span> Tanár
+                        </SelectItem>
+                        <SelectItem value="4" className="role-select-item">
+                          <span className="emoji">👨‍💼</span> Admin
+                        </SelectItem>
+                        {session?.user?.roleId === 5 && (
+                          <SelectItem value="5" className="role-select-item">
+                            <span className="emoji">👑</span> Szuperadmin
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {canModifyUser(selectedUser) && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDeleteUser(selectedUser)}
+                      disabled={isDeleting}
+                      className="w-full"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <span className="emoji animate-spin">⌛</span>
+                          Törlés...
+                        </>
+                      ) : (
+                        <>
+                          <span className="emoji">🗑️</span>
+                          Felhasználó Törlése
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {!canModifyUser(selectedUser) && (
+                    <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
+                      ⚠️ Nincs jogosultságod módosítani ezt a felhasználót.
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+                Válassz ki egy felhasználót a szerkesztéshez.
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Course Management Section */}
+        <div className="flex justify-between items-center mt-12 mb-8">
+          <h2 className="text-2xl font-semibold">Kurzus Kezelés 📚</h2>
+          {(session?.user?.roleId === 3 || session?.user?.roleId === 4 || session?.user?.roleId === 5) && (
+            <Button
+              onClick={() => {
+                setSelectedCourse(null);
+                setNewCourse({ name: '', description: '' });
+              }}
+              className="flex items-center gap-2"
+            >
+              <span className="emoji">➕</span>
+              Új Kurzus
+            </Button>
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Course Search Section */}
+          <section className="search-section" aria-labelledby="course-search-title">
+            <h2 id="course-search-title" className="text-2xl font-semibold mb-4">Kurzusok Keresése 🔍</h2>
+            <div className="mb-4">
+              <Input
+                type="text"
+                placeholder="Keresés név, leírás vagy oktató alapján..."
+                value={courseSearchQuery}
+                onChange={(e) => setCourseSearchQuery(e.target.value)}
+                className="search-input"
+                aria-label="Kurzus keresési kifejezés"
+              />
+            </div>
+
+            {/* Course Results Section */}
+            {courseSearchQuery && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold mb-2">
+                  Találatok ({filteredCourses.length}) 📝
+                </h3>
+                {filteredCourses.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredCourses.map((course) => (
+                      <div
+                        key={course.id}
+                        className={`course-result-card bg-white p-3 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow ${selectedCourse?.id === course.id ? 'border-2 border-blue-500' : ''}`}
+                        onClick={() => handleCourseClick(course)}
+                      >
+                        <div className="flex items-center gap-3">
+                          {course.teacher.image && (
+                            <img
+                              src={course.teacher.image}
+                              alt={course.teacher.name || 'Teacher'}
+                              className="w-8 h-8 rounded-full"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{course.name}</div>
+                            <div className="text-sm text-gray-500 truncate">{course.description}</div>
+                          </div>
+                          <div className="text-sm text-gray-600 whitespace-nowrap">
+                            👥 {course._count.students} tanuló
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-center py-4 bg-white rounded-lg shadow" role="status">
+                    😕 Nincs találat a keresésre.
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* Course Editor Section */}
+          <section className="course-editor-section" aria-labelledby="course-editor-title">
+            <h2 id="course-editor-title" className="text-2xl font-semibold mb-4">
+              {selectedCourse ? 'Kurzus Szerkesztése ✏️' : 'Új Kurzus Létrehozása ✨'}
+            </h2>
+            {selectedCourse ? (
+              <div className="bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center gap-4 mb-4">
+                  {selectedCourse.teacher.image && (
+                    <img
+                      src={selectedCourse.teacher.image}
+                      alt={selectedCourse.teacher.name || 'Teacher'}
+                      className="w-16 h-16 rounded-full"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-lg truncate">
+                      {selectedCourse.name}
+                    </div>
+                    <div className="text-gray-500 truncate">
+                      Oktató: {selectedCourse.teacher.name || 'Névtelen oktató'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Kurzus neve</label>
+                    <Input
+                      type="text"
+                      value={selectedCourse.name}
+                      onChange={(e) => handleCourseUpdate(selectedCourse.id, {
+                        name: e.target.value,
+                        description: selectedCourse.description,
+                      })}
+                      disabled={!canModifyCourse(selectedCourse) || isCourseSaving}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Leírás</label>
+                    <textarea
+                      value={selectedCourse.description}
+                      onChange={(e) => handleCourseUpdate(selectedCourse.id, {
+                        name: selectedCourse.name,
+                        description: e.target.value,
+                      })}
+                      disabled={!canModifyCourse(selectedCourse) || isCourseSaving}
+                      className="w-full min-h-[100px] p-2 rounded-md border border-gray-300"
+                    />
+                  </div>
+
+                  {canModifyCourse(selectedCourse) && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleCourseDelete(selectedCourse)}
+                      disabled={isCourseDeleting}
+                      className="w-full"
+                    >
+                      {isCourseDeleting ? (
+                        <>
+                          <span className="emoji animate-spin">⌛</span>
+                          Törlés...
+                        </>
+                      ) : (
+                        <>
+                          <span className="emoji">🗑️</span>
+                          Kurzus Törlése
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {!canModifyCourse(selectedCourse) && (
+                    <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
+                      ⚠️ Nincs jogosultságod módosítani ezt a kurzust.
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white p-4 rounded-lg shadow">
+                {(session?.user?.roleId === 3 || session?.user?.roleId === 4 || session?.user?.roleId === 5) ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Kurzus neve</label>
+                      <Input
+                        type="text"
+                        value={newCourse.name}
+                        onChange={(e) => setNewCourse(prev => ({ ...prev, name: e.target.value }))}
+                        disabled={isCreatingCourse}
+                        className="w-full"
+                        placeholder="Add meg a kurzus nevét..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Leírás</label>
+                      <textarea
+                        value={newCourse.description}
+                        onChange={(e) => setNewCourse(prev => ({ ...prev, description: e.target.value }))}
+                        disabled={isCreatingCourse}
+                        className="w-full min-h-[100px] p-2 rounded-md border border-gray-300"
+                        placeholder="Add meg a kurzus leírását..."
+                      />
+                    </div>
+
+                    <Button
+                      onClick={handleCreateCourse}
+                      disabled={isCreatingCourse || !newCourse.name || !newCourse.description}
+                      className="w-full"
+                    >
+                      {isCreatingCourse ? (
+                        <>
+                          <span className="emoji animate-spin">⌛</span>
+                          Létrehozás...
+                        </>
+                      ) : (
+                        <>
+                          <span className="emoji">✨</span>
+                          Kurzus Létrehozása
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    Válassz ki egy kurzust a szerkesztéshez.
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}

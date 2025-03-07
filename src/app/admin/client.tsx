@@ -3,9 +3,9 @@
 import AdminSearchBar from '../components/admin-searchbar/adminsearch';
 import AdminBody from '../components/admin-body/page';
 import { User } from '../api/models/user';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
+import { LoginDialog } from '../components/login-dialog/login-dialog';
 import type { AdminSearchBarRef } from '../components/admin-searchbar/adminsearch';
 
 export default function AdminPageClient() {
@@ -16,8 +16,16 @@ export default function AdminPageClient() {
     const searchBarRef = useRef<AdminSearchBarRef>(null);
 
     // Ha nincs session, átirányítjuk a login oldalra
-    if (status === 'unauthenticated') {
-        redirect('/login');
+    if (status === 'unauthenticated' || (session?.user?.roleId !== 4 && session?.user?.roleId !== 5)) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-gray-100">
+                <div className="text-center">
+                    <h1 className="mb-4 text-2xl font-bold text-gray-900">Admin felület</h1>
+                    <p className="mb-8 text-gray-600">Kérjük, jelentkezz be az admin felület használatához.</p>
+                    <LoginDialog />
+                </div>
+            </div>
+        );
     }
 
     const handleUserFound = useCallback((foundUsers: User[]) => {
@@ -53,7 +61,7 @@ export default function AdminPageClient() {
     };
 
     // Loading állapot megjelenítése
-    if (status === 'loading' || isLoading) {
+    if (isLoading) {
         return (
             <div className="admin-container">
                 <div className="loading-state">
