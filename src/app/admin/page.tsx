@@ -1,23 +1,25 @@
-'use client'
-import React, { useState } from 'react';
-import AdminSearchBar from '../components/admin-searchbar/adminsearch';
-import AdminBody from '../components/admin-body/page';
-import { User } from '../api/models/user';
+import { getServerSession } from 'next-auth';
+import { OPTIONS } from '../api/auth/[...nextauth]/route';
+import { redirect } from 'next/navigation';
+import { prisma } from '../api/auth/[...nextauth]/route';
+import AdminPageClient from './client';
+import './page.css';
 
-const AdminPanel: React.FC = () => {
-    const [searchedUser, setSearchedUser] = useState<User | null>(null);
+export default async function AdminPage() {
+    const session = await getServerSession(OPTIONS);
+    if (!session) {
+        redirect('/login');
+    }
 
-    const handleUserFound = (foundUser: User | null) => {
-        setSearchedUser(foundUser);
-    };
+    // Ellenőrizzük a felhasználó szerepkörét
+    const user = await prisma.user.findUnique({
+        where: { email: session.user?.email ?? '' },
+        select: { roleId: true }
+    });
 
-    return (
-        <div className="admin-panel">
-            <h1>Admin Panel</h1>
-            <AdminSearchBar onUserFound={handleUserFound} />
-            <AdminBody searchedUser={searchedUser} />
-        </div>
-    );
-};
+    if (!user || (user.roleId !== 4 && user.roleId !== 5)) {
+        redirect('/');
+    }
 
-export default AdminPanel;
+    return <AdminPageClient />;
+}

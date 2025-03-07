@@ -1,68 +1,111 @@
-'use client'
-import { SessionProvider, signIn, useSession } from "next-auth/react";
+'use client';
+
+import { signIn, useSession } from "next-auth/react";
 import './page.css';
-import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Login() {
-  return (
-    <SessionProvider>
-      <LoginInner />
-    </SessionProvider>
-  );
-}
-
-function LoginInner() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({
+    google: false,
+    discord: false,
+    spotify: false
+  });
 
   useEffect(() => {
-    if (session) {
-      window.location.href = 'http://localhost:3000';
+    if (status === 'authenticated' && session) {
+      // @ts-ignore - Adding role type to session user
+      const userRole = session.user?.role || 'user';
+      if (userRole === 'admin') {
+        router.replace('/admin');
+      } else {
+        router.replace('/');
+      }
     }
-  }, [session]);
+  }, [status, session, router]);
 
-  const handleSingInGoogle = async () => {
+  const handleSignIn = async (provider: string) => {
+    setError(null);
+    setIsLoading(prev => ({ ...prev, [provider]: true }));
+    
     try {
-      await signIn('google', { redirect: false });
+      const result = await signIn(provider, { 
+        redirect: false
+      });
+      
+      if (result?.error) {
+        setError('Sikertelen bejelentkezés. Kérjük próbáld újra!');
+        console.error('Bejelentkezési hiba:', result.error);
+      }
+      // A sikeres bejelentkezés után a useEffect fogja kezelni az átirányítást
     } catch (error) {
-      console.error('Error signing in', error);
+      setError('Hiba történt a bejelentkezés során. Kérjük próbáld újra!');
+      console.error('Hiba a bejelentkezés során:', error);
+    } finally {
+      setIsLoading(prev => ({ ...prev, [provider]: false }));
     }
-  }
-  
-  const handleSingInDiscord = async () => {
-    try {
-      await signIn('discord', { redirect: false });
-    } catch (error) {
-      console.error('Error signing in', error);
-    }
-  }
+  };
 
-  const handleSignInSpotify = async () => {
-    try {
-      await signIn('spotify', { redirect: false });
-    } catch (error) {
-      console.error('Error signing in', error);
-    }
+  if (status === 'loading') {
+    return (
+      <div className="login-container">
+        <div className="loading-spinner">⌛</div>
+      </div>
+    );
   }
 
   return (
-    <div id="login">
-      <form onSubmit={(e) => e.preventDefault()}> {}
-        <b>Bejelentkezés</b>
-        <button onClick={handleSingInGoogle}>
-          Bejelentkezés Google-lel
-          <Image src="https://authjs.dev/img/providers/google.svg" width={30} height={30} alt="Google logo" />
-        </button>
-        <button type="button" onClick={handleSingInDiscord}>
-          Bejelentkezés Discorddal
-          <Image src="https://authjs.dev/img/providers/discord.svg" width={30} height={30} alt="Discord logo" />
-        </button>
-        <button type="button" onClick={handleSignInSpotify}>
-          Bejelentkezés Spotify-al
-          <Image src="https://authjs.dev/img/providers/spotify.svg" width={30} height={30} alt="Spotify logo" />
-        </button>
-        
-      </form>
+    <div className="login-container">
+      {status === 'loading' ? (
+        <div className="loading-spinner">⌛</div>
+      ) : (
+        <div className="login-box">
+          <h1 className="login-title">Üdvözlünk!</h1>
+          <p className="login-subtitle">Válassz bejelentkezési módot</p>
+          
+          {error && (
+            <div className="login-error">
+              ⚠️ {error}
+            </div>
+          )}
+          
+          <div className="login-buttons">
+            <button 
+              className="login-button google"
+              onClick={() => handleSignIn('google')}
+              disabled={isLoading.google}
+            >
+              <img src="/icons/google.svg" alt="Google" />
+              {isLoading.google ? 'Bejelentkezés...' : 'Bejelentkezés Google-lal'}
+            </button>
+            
+            <button 
+              className="login-button discord"
+              onClick={() => handleSignIn('discord')}
+              disabled={isLoading.discord}
+            >
+              <img src="/icons/discord.svg" alt="Discord" />
+              {isLoading.discord ? 'Bejelentkezés...' : 'Bejelentkezés Discord-dal'}
+            </button>
+            
+            <button 
+              className="login-button spotify"
+              onClick={() => handleSignIn('spotify')}
+              disabled={isLoading.spotify}
+            >
+              <img src="/icons/spotify.svg" alt="Spotify" />
+              {isLoading.spotify ? 'Bejelentkezés...' : 'Bejelentkezés Spotify-jal'}
+            </button>
+          </div>
+
+          <p className="login-info">
+            A bejelentkezéssel elfogadod az <a href="/terms">ÁSZF</a>-et és az <a href="/privacy">Adatvédelmi irányelveket</a>
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,3 +1,48 @@
+.logout-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: var(--background);
+}
+
+.logout-content {
+  text-align: center;
+  padding: 2rem;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  max-width: 400px;
+  width: 100%;
+}
+
+.logout-button {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+  margin-top: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.logout-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.logout-message {
+  color: var(--foreground);
+  margin-bottom: 1.5rem;
+  font-size: 1.125rem;
+}
+
 button{
     color: var(--background);
     font-size: 20px;

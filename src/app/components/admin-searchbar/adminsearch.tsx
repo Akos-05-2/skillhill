@@ -1,62 +1,140 @@
+'use client';
+
 import './style.css';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import axios from 'axios';
-import React, { useState } from 'react';
 import { User } from '../../api/models/user'; 
 
-async function fetchUserByEmail(email: string): Promise<User | null> {
-    try {
-        console.log('Keresés:', email);
-        const response = await axios.get(`http://localhost:3000/api/services/user`);
-        return response.data; 
-    } catch (error) {
-        console.error('Hiba a felhasználó keresése során:', error);
-        return null; 
-    }
-}
-
 interface AdminSearchBarProps {
-    onUserFound: (user: User | null) => void; 
+    onUserFound: (users: User[]) => void; 
 }
 
-const AdminSearchBar: React.FC<AdminSearchBarProps> = ({ onUserFound }) => {
-    const [email, setEmail] = useState('');
+interface AdminSearchBarRef {
+    fetchAllUsers: () => Promise<void>;
+}
 
-    const handleSearch = async () => {
-        if (email.trim() === '') {
-            alert('A keresési mező nem lehet üres!');
-            onUserFound(null); 
+const AdminSearchBar = forwardRef<AdminSearchBarRef, AdminSearchBarProps>(function AdminSearchBar({ onUserFound }, ref) {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const searchTimeout = useRef<NodeJS.Timeout>();
+
+    // Összes felhasználó betöltése
+    const fetchAllUsers = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const { data } = await axios.get('/api/services/user', {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                withCredentials: true
+            });
+            setAllUsers(data);
+            onUserFound(data); // Kezdetben minden felhasználót mutatunk
+        } catch (error) {
+            console.error('Hiba a felhasználók betöltése során:', error);
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    setError('Kérjük jelentkezzen be újra!');
+                } else if (error.response?.status === 403) {
+                    setError('Nincs jogosultsága a felhasználók megtekintéséhez!');
+                } else {
+                    setError('Hiba történt a felhasználók betöltése során!');
+                }
+            } else {
+                setError('Ismeretlen hiba történt!');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }, [onUserFound]);
+
+    // Expose fetchAllUsers method through ref
+    useImperativeHandle(ref, () => ({
+        fetchAllUsers
+    }), [fetchAllUsers]);
+
+    useEffect(() => {
+        fetchAllUsers();
+    }, [fetchAllUsers]);
+
+    // Keresés a már betöltött felhasználók között
+    const handleSearch = useCallback(() => {
+        setError(null);
+        
+        if (!searchTerm.trim()) {
+            onUserFound(allUsers);
             return;
         }
-        if (!email.includes('@') || !email.includes('.')) {
-            alert('A bemenet értéke érvénytelen!');
-            onUserFound(null);
-            return;
+
+        // Keresés email és név alapján is
+        const filteredUsers = allUsers.filter(user => 
+            (user.email?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+             user.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+
+        onUserFound(filteredUsers);
+    }, [searchTerm, allUsers, onUserFound]);
+
+    // Keresés minden billentyűleütésre, debounce-al
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newSearchTerm = e.target.value;
+        setSearchTerm(newSearchTerm);
+        
+        // Töröljük az előző időzítőt
+        if (searchTimeout.current) {
+            clearTimeout(searchTimeout.current);
         }
-        const foundUser = await fetchUserByEmail(email);
-        console.log('Talált felhasználó:', foundUser); 
-        onUserFound(foundUser); 
-        setEmail(''); 
+
+        // Új időzítő beállítása
+        searchTimeout.current = setTimeout(() => {
+            if (!newSearchTerm.trim()) {
+                onUserFound(allUsers);
+            } else {
+                const filteredUsers = allUsers.filter(user => 
+                    (user.email?.toLowerCase().includes(newSearchTerm.toLowerCase()) || 
+                     user.name?.toLowerCase().includes(newSearchTerm.toLowerCase()))
+                );
+                onUserFound(filteredUsers);
+            }
+        }, 300); // 300ms késleltetés
     };
+
+    // Komponens unmount esetén töröljük az időzítőt
+    useEffect(() => {
+        return () => {
+            if (searchTimeout.current) {
+                clearTimeout(searchTimeout.current);
+            }
+        };
+    }, []);
 
     return (
         <div className="search-container">
-            <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
+            <div className="search-input-container">
                 <input 
                     type="text"
                     className='search-input'
-                    placeholder='Keresés'
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder='Keresés név vagy email alapján...'
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
                 />
-                <input 
-                    type="button" 
-                    onClick={handleSearch} 
-                    className='search-button' 
-                    value="🔍" 
-                />
-            </form>
+                <button 
+                    type="button"
+                    className='search-button'
+                    onClick={handleSearch}
+                    disabled={isLoading}
+                >
+                    {isLoading ? '⌛' : '🔍'}
+                </button>
+            </div>
+            {error && <div className="search-error">{error}</div>}
+            {isLoading && <div className="search-loading">Felhasználók betöltése...</div>}
         </div>
     );
-};
+});
 
 export default AdminSearchBar;
