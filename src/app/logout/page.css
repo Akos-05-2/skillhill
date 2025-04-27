@@ -1,0 +1,18 @@
+button{
+    background-color: var(--foreground);
+    color: var(--background);
+    font-size: 20px;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    border: var(--foreground) solid 2px;
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+p{
+    margin-bottom: 40px;
+    margin-right: 200px;
+}

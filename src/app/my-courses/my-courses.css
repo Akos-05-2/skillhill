@@ -1,0 +1,37 @@
+.open-course-button {
+  background: linear-gradient(to right, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 15px;
+  font-weight: 500;
+}
+
+.open-course-button:hover {
+  background: linear-gradient(to right, #45a049, #3d8b40);
+  transform: translateY(-2px);
+}
+
+.open-course-button:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Egyedi stílusok a jelentkezéseim oldalhoz */
+.courses-hero {
+  background: #2563eb;
+}
+
+.container{
+  margin-top: -100px;
+  margin-bottom: -100px;
+}
+
+main{
+  background-color: #fff;
+}

@@ -1,0 +1,531 @@
+.course-page {
+  min-height: 100vh;
+  font-family: 'Geist', sans-serif;
+  background: #f5f7fa;
+}
+
+.course-hero {
+  background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%);
+  padding: 60px 0;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.course-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('/images/pattern.svg') repeat;
+  opacity: 0.1;
+  z-index: 0;
+}
+
+.course-hero .container {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.course-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.course-hero p {
+  font-size: 1.2rem;
+  max-width: 800px;
+  line-height: 1.6;
+  opacity: 0.9;
+  margin-bottom: 2rem;
+}
+
+.progress-bar {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  height: 10px;
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+}
+
+.progress {
+  background: #4CAF50;
+  border-radius: 10px;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  right: 0;
+  top: -25px;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.course-content {
+  padding: 40px 0;
+}
+
+.course-content .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.course-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 30px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.modules-sidebar {
+  background: #f8f9fa;
+  padding: 20px;
+  border-right: 1px solid #e9ecef;
+}
+
+.modules-sidebar h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.module-item {
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.module-item:hover {
+  background: #e9ecef;
+}
+
+.module-item.active {
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+}
+
+.module-item h3 {
+  font-size: 1rem;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.module-progress {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.materials-content {
+  padding: 30px;
+}
+
+.materials-content h2 {
+  font-size: 1.8rem;
+  margin-bottom: 25px;
+  color: #333;
+}
+
+.materials-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.material-item {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+}
+
+.material-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.material-item.completed {
+  border-left: 4px solid #4CAF50;
+}
+
+.material-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.material-icon {
+  font-size: 1.5rem;
+}
+
+.material-header h3 {
+  flex: 1;
+  font-size: 1.1rem;
+  margin: 0;
+  color: #333;
+}
+
+.material-duration {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.material-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.material-actions button {
+  background: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.material-actions button:hover {
+  background: #2563eb;
+}
+
+.completed-badge {
+  background: #4CAF50;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.material-description {
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.course-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+  margin-top: 30px;
+}
+
+.unenroll-button {
+  background: linear-gradient(to right, #ff4b4b, #ff0000);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.unenroll-button:hover {
+  background: linear-gradient(to right, #ff0000, #cc0000);
+  transform: translateY(-2px);
+}
+
+.unenroll-button:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 992px) {
+  .course-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .modules-sidebar {
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .course-hero .container {
+    padding: 0 15px;
+  }
+
+  .material-item {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .course-hero h1 {
+    font-size: 2rem;
+  }
+
+  .course-hero p {
+    font-size: 1rem;
+  }
+
+  .materials-content {
+    padding: 20px;
+  }
+
+  .materials-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .material-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .material-header h3 {
+    width: 100%;
+  }
+
+  .material-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .material-actions button {
+    flex: 1;
+    max-width: 200px;
+    justify-content: center;
+  }
+
+  .course-content .container {
+    padding: 0 15px;
+  }
+
+  .progress-bar {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .course-hero h1 {
+    font-size: 1.75rem;
+  }
+
+  .course-hero p {
+    font-size: 0.95rem;
+  }
+
+  .materials-content {
+    padding: 15px;
+  }
+
+  .material-header {
+    gap: 8px;
+  }
+
+  .material-duration {
+    font-size: 0.85rem;
+  }
+
+  .material-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .material-actions button {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    max-width: none;
+  }
+
+  .unenroll-button {
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .material-description {
+    font-size: 0.9rem;
+  }
+
+  .module-item {
+    padding: 12px;
+  }
+
+  .module-item h3 {
+    font-size: 0.95rem;
+  }
+
+  .module-progress {
+    font-size: 0.85rem;
+  }
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.nav-user-name {
+  color: #333;
+  font-weight: 500;
+}
+
+.nav-logout {
+  padding: 8px 16px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.nav-logout:hover {
+  background: #e0e0e0;
+}
+
+.hamburger-menu {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  padding: 8px;
+  background: transparent;
+  border: none;
+}
+
+.hamburger-line {
+  width: 24px;
+  height: 2px;
+  background: currentColor;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 280px;
+  height: 100vh;
+  background: var(--background);
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.mobile-menu.active {
+  right: 0;
+}
+
+.mobile-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.close-menu {
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--foreground);
+}
+
+.mobile-nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mobile-nav-items a {
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 1.1rem;
+  padding: 8px 0;
+}
+
+.mobile-nav-user {
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+}
+
+.mobile-nav-user-name {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--foreground);
+  margin-bottom: 15px;
+}
+
+.mobile-nav-logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--accent);
+  border-radius: 6px;
+  color: var(--accent-foreground);
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  width: 100%;
+  transition: opacity 0.2s;
+}
+
+.mobile-nav-logout:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .nav-menu {
+    display: none;
+  }
+
+  .hamburger-menu {
+    display: flex;
+  }
+
+  .mobile-menu {
+    display: block;
+  }
+
+  .nav-user {
+    display: none;
+  }
+} 
