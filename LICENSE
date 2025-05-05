@@ -1,0 +1,49 @@
+Vizsgaremek Licencfeltételek (VLL) 1.0
+
+A jelen licencfeltételek a repository-ban található teljes tartalomra — beleértve, de nem kizárólagosan: a forráskódot, dokumentációt, képeket, ábrákat, adatstruktúrákat, fájlokat és minden kapcsolódó anyagot — vonatkoznak. A licenc kizárólag a szakmai vizsga lebonyolításához szükséges megtekintést engedélyezi, minden más felhasználás szigorúan tilos a szerző előzetes, írásos engedélye nélkül.
+
+1. Engedélyezett tevékenységek
+A licenc korlátozott, nem átruházható és nem kizárólagos engedélyt ad a következőkre:
+
+- A forráskód és dokumentáció megtekintése kizárólag a szakmai vizsga ideje alatt és annak közvetlen előkészületei során.
+
+- A vizsga értékelői, vizsgabizottság tagjai és az érintett oktatási intézmény kijelölt képviselői számára történő hozzáférés.
+
+2. Kifejezetten tiltott tevékenységek
+A következő tevékenységek kizárólag a szerző előzetes, kifejezett és írásos engedélyével lehetségesek. Ezen engedély hiányában az alábbiak tilosak:
+
+- A forráskód, dokumentáció vagy bármely részének másolása, letöltése, terjesztése, nyilvánosságra hozatala vagy archiválása.
+
+- A tartalom módosítása, átdolgozása, fordítása vagy bármilyen formában történő származtatása.
+
+- A forráskód vagy dokumentáció bármilyen formában történő újrafelhasználása (beleértve más projektekben való alkalmazást).
+
+- Kereskedelmi célú felhasználás, ideértve, de nem kizárólagosan: értékesítés, szolgáltatásként való kínálás, vagy oktatási/licenc díjért való felhasználás.
+
+- A tartalom mesterséges intelligencia, nyelvi modellek vagy gépi tanulás céljából való felhasználása, tanítása vagy betanítása.
+
+- A tartalom bármely részének feltöltése nyilvános, nyílt forráskódú vagy más tárolórendszerekbe (pl. GitHub, GitLab, Bitbucket stb.).
+
+3. Szellemi tulajdonjogok
+- A repository teljes tartalma a szerző – Olajkár Ákos Botond – kizárólagos szellemi tulajdona.
+
+- A szerző fenntart minden, a jelen anyaghoz fűződő szerzői, iparjogvédelmi, és egyéb jogát, beleértve, de nem kizárólagosan: a forráskódhoz, eljárásokhoz, struktúrákhoz, algoritmusokhoz és dokumentációhoz fűződő jogokat.
+
+- A licenc nem értelmezhető úgy, hogy az bármilyen tulajdonjogot ruházna át a felhasználóra.
+
+4. Felelősség és jogkövetkezmények
+- A jelen licenc megsértése súlyos jogsértésnek minősül, és polgári vagy büntetőjogi felelősséget vonhat maga után.
+
+- A szerző jogosult minden szükséges jogi lépést megtenni, ideértve a kártérítés érvényesítését, azonnali hozzáférés-megszüntetést, valamint hivatalos bejelentést az érintett oktatási vagy szakmai szervezetnél.
+
+- A jogsértés nyomán felmerülő minden kárért a jogsértő teljes körű felelősséggel tartozik.
+
+5. Egyéb rendelkezések
+- A jelen licenc a közzététel napjától érvényes.
+
+- A licenc érvényessége visszavonható a szerző döntése alapján.
+
+- A licenc magyar joghatóság alá tartozik, a jogviták elbírálására a szerző székhelye szerinti bíróság az illetékes.
+
+Készítette: Olajkár Ákos Botond
+Dátum: 2025-05-05
